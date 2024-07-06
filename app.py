@@ -8,7 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # секретный ключ для сессии
 
-# Настройка базы данных
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 database_path = os.path.join(basedir, 'app.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{database_path}'
@@ -16,7 +16,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# Модель вакансий
+
 class Vacancy(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128))
@@ -26,16 +26,17 @@ class Vacancy(db.Model):
     currency = db.Column(db.String(10))
     employer = db.Column(db.String(128))
 
-# Модель кандидатов (здесь добавьте поля, которые считаете нужными)
+
 class Candidate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     vacancy_id = db.Column(db.Integer, db.ForeignKey('vacancy.id'))
     name = db.Column(db.String(128))
     experience = db.Column(db.String(64))
 
-# Создание базы данных
+
 with app.app_context():
     db.create_all()
+
 
 @app.route('/vac')
 def vacancies():
@@ -43,6 +44,7 @@ def vacancies():
     total_vacancies = Vacancy.query.count()
     total_candidates = Candidate.query.count()  # предположим, что есть кандидаты в базе данных
     return render_template('vacancies.html', vacancies=vacancies, total_vacancies=total_vacancies, total_candidates=total_candidates)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def authorization():
@@ -62,6 +64,7 @@ def authorization():
                  <input type="submit" value="Find">
              </form>'''
 
+
 def get_vacancies(url, params):
     all_vacancies = []
     page = 0
@@ -79,6 +82,7 @@ def get_vacancies(url, params):
             break
     return all_vacancies
 
+
 def parse_vacancies(items):
     vacancies = []
     for item in items:
@@ -94,6 +98,7 @@ def parse_vacancies(items):
         vacancies.append(vacancy)
     return vacancies
 
+
 def get_area_id(city_name):
     areas_url = "https://api.hh.ru/areas"
     areas_response = requests.get(areas_url)
@@ -108,6 +113,7 @@ def get_area_id(city_name):
                         return sub_area['id']
     return None
 
+
 def main(vacancy_name, city, experience):
     experience_map = {
         'без опыта': 'noExperience',
@@ -121,7 +127,7 @@ def main(vacancy_name, city, experience):
         print(f"Город {city} не найден.")
         return []
 
-    url = "https://api.hh.ru/vacancies"  # определение переменной url
+    url = "https://api.hh.ru/vacancies"
 
     params = {
         'text': f'NAME:({vacancy_name})',
@@ -132,8 +138,9 @@ def main(vacancy_name, city, experience):
 
     data = get_vacancies(url, params)
     vacancies = parse_vacancies(data)
-    save_vacancies_to_db(vacancies)  # Сохранение вакансий в базу данных
+    save_vacancies_to_db(vacancies)
     return vacancies
+
 
 def save_vacancies_to_db(vacancies):
     for vac in vacancies:
@@ -147,6 +154,7 @@ def save_vacancies_to_db(vacancies):
         )
         db.session.add(vacancy)
     db.session.commit()
+
 
 def open_browser():
     webbrowser.open_new('http://127.0.0.1:8000/')
